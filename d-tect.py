@@ -1,16 +1,34 @@
-import re,urllib,os,socket,sys
-from moduleBS import BeautifulSoup
+# asdlfkhalsdkfjalsdkfjadf ! /usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import re, urllib, os, socket, sys
 import urlparse
-from dtectcolors import Style,Fore,Back,init 
+
+from dtectcolors import Style, Fore, Back, init
+from moduleBS import BeautifulSoup
+from time import sleep
+from os import path
+
 init()
-if os.name == 'nt':
-	os.system('cls')
-else:
-	os.system('clear')
+
+
+try: input = raw_input
+except: pass
 
 d4rk = 0
 dr1 = "D4rk "
+version = 1.1
 
+darkpurple = "\033[1;35m"
+darkgreen  = '\033[92m'
+yellow     = '\033[93m'
+red        = '\033[91m'
+endc       = "\033[1;m"
+bold       = '\033[1m'
+# BOLD COLORS ONLY
+boldred    = bold+red
+boldgreen  = bold+darkgreen
+boldyellow = bold+yellow
 
 # -- Colors Start -- 
 boldwhite 		= 		Style.BRIGHT+Fore.WHITE
@@ -18,7 +36,7 @@ boldgrey		=		Style.DIM+Fore.WHITE
 reset 			= 		Style.RESET_ALL
 green			=		Style.BRIGHT+Fore.GREEN
 lightgreen		=		Fore.GREEN
-red 			=		Fore.RED 
+red 			=		Fore.RED
 boldred			=		Style.BRIGHT+Fore.RED
 # -- Colors End -- 
 
@@ -35,20 +53,46 @@ wpbackupscan	=		"off"
 sqliscanner		=		"off"
 # -- Swiches End --
 
+def abort():
+	print(green + "[!]"+reset+boldwhite+" Exiting..." + reset)
+	print(boldwhite + "Thanks for using D-TECT!" + reset)
+	sys.exit()
 
-def dtect():
-	print("  ____   _____ _____ ____ _____ ")
+def clear():
+	if os.name == 'nt':
+		os.system('cls')
+	else:
+		os.system('clear')
+
+def banner():
+	print(boldred + \
+	      "  ____   _____ _____ ____ _____ ")
 	print(" |  _ \ |_   _| ____/ ___|_   _|")
 	print(" | | | |__| | |  _|| |     | |  ")
 	print(" | |_| |__| | | |__| |___  | |  ")
-	print(" |____/   |_| |_____\____| |_|  v1.0")
+	print(" |____/   |_| |_____\____| |_|  " + reset + boldwhite +"v"+str(version)+reset)
 	print("") 
-	print(" D-TECT - Pentest the Modern Web")
-	print(" Author: Shawar Khan - ( https://shawarkhan.com )")
+	print(darkgreen+" D-TECT - Pentest the Modern Web")
+	print(" Author       : Shawar Khan   ( https://shawarkhan.com )")
+	print(" Maintained by: Th3J0k3r      ( https://thegibson.xyz )"+reset)
+	
 	print("")
+
+def dtect():
 	def menu():
+		clear(); banner()
 		global filedetector,wpenumerator,subdomainscan,portscan,wpscan,xssscanner,wpbackupscan,sqliscanner
-		print(" -- "+boldwhite+"Menu"+reset+" -- \n \n  1. 	"+boldwhite+"WordPress Username Enumerator"+reset+"   \n  2. 	"+boldwhite+"Sensitive File Detector"+reset+"        \n  3. 	"+boldwhite+"Sub-Domain Scanner"+reset+"\n  4. 	"+boldwhite+"Port Scanner"+reset+"        \n  5. 	"+boldwhite+"Wordpress Scanner\n"+reset+"  6. 	"+boldwhite+"Cross-Site Scripting [ XSS ] Scanner\n"+reset+"  7.    "+boldwhite+"Wordpress Backup Grabber\n"+reset+"  8.    "+boldwhite+"SQL Injection [ SQLI ] Scanner\n"+reset)
+		print(" -- "+boldwhite+"Menu"+reset+" -- \n \n")
+		print("  1. 	"+boldwhite+"WordPress Username Enumerator"+reset)
+		print("  2. 	"+boldwhite+"Sensitive File Detector"+reset)
+		print("  3. 	"+boldwhite+"Sub-Domain Scanner"+reset)
+		print("  4. 	"+boldwhite+"Port Scanner"+reset)
+		print("  5. 	"+boldwhite+"Wordpress Scanner"+reset)
+		print("  6. 	"+boldwhite+"Cross-Site Scripting [ XSS ] Scanner"+reset)
+		print("  7.    "+boldwhite+"Wordpress Backup Grabber"+reset)
+		print("  8.    "+boldwhite+"SQL Injection [ SQLI ] Scanner"+reset)
+		print("  99.   "+boldwhite+"Exit"+reset)
+		
 		option = raw_input("[+] Select Option\n    > ")
 		if option == "1":
 			wpenumerator = "on"
@@ -66,8 +110,11 @@ def dtect():
 			wpbackupscan = "on"
 		elif option == "8":
 			sqliscanner = "on"
+		elif option == "99":
+			abort()
 		else:
 			print("[+] Incorrect Option selected")
+			sleep(1)
 			menu()
 
 	def sock(i,secretswitch=0):
@@ -88,6 +135,7 @@ def dtect():
 		if "used CloudFlare to restrict access</title>" in pagesource:
 			print("[!] Cloudflare blocked the IP")
 			again()
+
 	def alive():
 		try:
 			global page,splithost,ip
@@ -101,6 +149,9 @@ def dtect():
 			print("[+] Checking if any Cloudflare is blocking access...")
 			cloudflare()
 			redirectcheck()
+		except Exception as error:
+			print(boldred + "[!] " + str(error) + reset)
+			again()
 		except(IOError):
 			print("[!] "+red+"Error connecting to site! Site maybe down."+reset)
 			again()
@@ -133,13 +184,21 @@ def dtect():
 		if cj == 0:
 			caution.append("[!]"+red+" X-Frame-Options header Missing\n"+reset+"[!] "+red+"Page might be vulnerable to "+boldred+"Click Jacking\n"+reset+"[!] "+boldred+page.geturl()+reset+"\n[i] About ClickJacking: [ "+green+"https://www.owasp.org/index.php/Clickjacking"+reset+" ]")
 		print("[+] Interesting Headers Found:")
+		cloudflare_ok = 0
 		for i in headersfound:
+			if "cloudflare" in i:
+				cloudflare_ok = 1
 			print(" | %s")%(i)
 		if len(interesting) != 0:
 			print("\n[i] Information from Headers:")
 			for i in interesting:
+				if "cloudflare" in i:
+					cloudflare_ok = 1
 				print(" | %s")%i
-		print('')
+		
+		if cloudflare_ok == 1:
+			print(boldred+" [!!] Cloudflare is in place! Some results could be false!"+reset)
+
 		if cj == 0:
 			print(caution[0])
 		print('')
@@ -549,22 +608,51 @@ def dtect():
 		if wpbackupscan == "on":
 			wpbackupscanner()
 		if filedetector == "on":
-			files = ['robots.txt','crossdomain.xml','.htaccess','clientaccesspolicy.xml','infophp.php','log.txt','logs.txt','CHANGELOG.txt','awstats/data/']
-			print("[+] Scan Started")
-			print("[+] Searching sensitive files...")
-			print("[?] Note: Press CTRL+C to skip\n  ")
-			try:
-				for i in files:
-					if i == "awstats/data/":
-						sock(i)
-						if "<title>Index of /awstats/data</title>" in sourcecode:
-							print("[!] awstats detected!\n[!] URL: %s")%(data)
-					else:
-						sock(i)
-						if page.getcode() == 200:
-							print("[!] File Found!\n | Name: %s\n | URL: %s\n")%(i,data)
-			except(KeyboardInterrupt):
-				print("\n[+] File detection skipped")
+			run_scan = False
+			default_files = ['robots.txt','crossdomain.xml','.htaccess','clientaccesspolicy.xml','infophp.php','log.txt','logs.txt','CHANGELOG.txt','awstats/data/', "keybase.txt"]
+			user_files = input("Enter the wordlist for files (press enter for default) ")
+			xfiles = []
+			if len(user_files) <= 1:
+				print(green + "[i] "+ reset +"Using default wordlist")
+				files = default_files
+				run_scan = True
+			else:
+				if path.exists(user_files):
+					print(green + "[i] "+ reset +"Using %s "% user_files)
+					with open(user_files,"r") as fd:
+						fi = fd.readlines()
+						for i in fi:
+							i = i.replace("\n","")
+							if i == "" or i == " ":
+								pass
+							xfiles.append(i)
+					#files = user_files
+					run_scan = True
+				else:
+					print("%s does not exist!"%user_files)
+					again()
+			if run_scan == True:
+				files = xfiles
+				print("[+] Scan Started")
+				print("[+] Searching sensitive files...")
+				print("[?] Note: Press CTRL+C to skip\n  ")
+				try:
+					counter = 0
+					for i in files:
+						total_files = len(files)
+						counter += 1
+						sys.stdout.write("\r[+] Progress %i / %s ..."% (counter,total_files))
+						sys.stdout.flush()
+						if i == "awstats/data/":
+							sock(i)
+							if "<title>Index of /awstats/data</title>" in sourcecode:
+								print("[!] awstats detected!\n[!] URL: %s")%(data)
+						else:
+							sock(i)
+							if page.getcode() == 200:
+								print("[!] File Found!\n | Name: %s\n | URL: %s\n")%(i,data)
+				except(KeyboardInterrupt):
+					print("\n[+] File detection skipped")
 		if wpenumerator == "on":
 			print("  \n[+] Detecting Wordpress")
 			wp = 0
